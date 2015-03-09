@@ -27,14 +27,13 @@ home_blueprint = Blueprint(
 ################
 @home_blueprint.route('/foursquare_oauth',methods = ['POST'])
 def foursquare_oauth():
-    print "hi"
     #user = db.session.query(User).filter_by(id = current_user.id)
     #s = select(users).where(users.id == current_user.id)
     #result = db.session.execute(s)
     #current_user = db.session.query('select token from users where name=?',current_user.id)
-    #token = current_user.token
-    #if token == "":
-        #flash("User is not connected yet")
+    token = current_user.token
+    if token == "":
+        flash("User is not connected yet")
         #flash("Connected Already")
         #return redirecturl('/')  # may need to fix this line
    # else:
@@ -53,9 +52,9 @@ def foursquare_accept():
     g.db.execute('update users set token=?, foursquare_id=? where name=?', [token, user_id, session.get('current_user')])
     g.db.commit()
     flash('successfully connected with foursquare')
-    return redirect('/')
+    return redirect('/')'''
     
-@app.route('/foursquare_checkin', methods=['POST'])
+'''@app.route('/foursquare_checkin', methods=['POST'])
 def foursquare_checkin():
     checkin_str = json.loads(request.form['checkin'])
     checkin = json.loads(request.form['checkin'])
@@ -68,8 +67,8 @@ def foursquare_checkin():
         print associated_user
         g.db.execute('insert into entries (title, text, user) values ("Checkin", ?, ?)', [json.dumps(checkin_str), associated_user])
     g.db.commit()
-    return ('Thanks', 200, '')
-'''
+    return ('Thanks', 200, '')'''
+
 
 
 
