@@ -25,26 +25,23 @@ home_blueprint = Blueprint(
 ################
 #### routes ####
 ################
-@home_blueprint.route('/foursquare_oauth',methods = ['POST'])
-def foursquare_oauth():
-    #user = db.session.query(User).filter_by(id = current_user.id)
-    #s = select(users).where(users.id == current_user.id)
-    #result = db.session.execute(s)
-    #current_user = db.session.query('select token from users where name=?',current_user.id)
+@home_blueprint.route('/fs_oauth',methods = ['POST'])
+def fs_oauth():
     token = current_user.token
     if token == "":
         flash("User is not connected yet")
-        #flash("Connected Already")
-        #return redirecturl('/')  # may need to fix this line
-   # else:
-        #return redirect('https://foursquare.com/oauth2/authenticate?client_id=%s&response_type=code&redirect_uri=%s' % (CLIENT_ID),'my aws site accept endpoint')
+        flash("Connected Already")
+        flash(current_user.id)
+        return redirect(url_for('home.home'))
+    else:
+        return redirect('https://foursquare.com/oauth2/authenticate?client_id=%s&response_type=code&redirect_uri=%s' % (current_user.id),'my aws site accept endpoint')
 
 
-'''@app.route('/foursquare_accept')
-def foursquare_accept():
+'''@home_blueprint.route('/fs_get_token')
+def foursquare_get_token():
     code = request.args.get('code')
-    r = requests.get('https://foursquare.com/oauth2/access_token?client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s&code=%s' % (CLIENT_ID, CLIENT_SECRET, 'my accept endpoint', code))
-    token = r.json()['access_token']
+    req = requests.get('https://foursquare.com/oauth2/access_token?client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s&code=%s' % (CLIENT_ID, CLIENT_SECRET, 'my accept endpoint', code))
+    token = req.json()['access_token']
     user_request = requests.get('https://api.foursquare.com/v2/users/self?oauth_token=%s&v=20150207' % (token))
     response_dict = user_request.json()['response']
     user_dict = response_dict['user']
@@ -54,8 +51,8 @@ def foursquare_accept():
     flash('successfully connected with foursquare')
     return redirect('/')'''
     
-'''@app.route('/foursquare_checkin', methods=['POST'])
-def foursquare_checkin():
+'''@home_blueprint.route('/fs_checkin', methods=['POST'])
+def fs_checkin():
     checkin_str = json.loads(request.form['checkin'])
     checkin = json.loads(request.form['checkin'])
     user = checkin['user']
