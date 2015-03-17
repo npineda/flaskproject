@@ -2,6 +2,9 @@
 #### imports ####
 #################
 
+import requests
+import logging
+from pprint import pprint
 from flask import render_template, Blueprint, \
     request, flash, redirect, url_for   # pragma: no cover
 from flask.ext.login import login_required, current_user   # pragma: no cover
@@ -11,6 +14,10 @@ from project import db   # pragma: no cover
 from project.models import BlogPost   # pragma: no cover
 from project.models import User
 from sqlalchemy.sql import select
+
+
+CLIENT_ID = 'XTEKY0EK25W5S0VAWGBETHQNYY20FXPB5P1V2ZMY1GQSJXFW'
+CLIENT_SECRET = 'PJFLTVUA5YNSXR2G5ISL5F4N2KOCZEZ2YUHXFWOV01UIGJO4'
 
 ################
 #### config ####
@@ -29,27 +36,35 @@ home_blueprint = Blueprint(
 def fs_oauth():
     token = current_user.token
     if token == "":
-        flash("User is not connected yet")
         flash("Connected Already")
-        flash(current_user.id)
         return redirect(url_for('home.home'))
     else:
-        return redirect('https://foursquare.com/oauth2/authenticate?client_id=%s&response_type=code&redirect_uri=%s' % (current_user.id),'my aws site accept endpoint')
+        return redirect('https://foursquare.com/oauth2/authenticate?client_id=%s&response_type=code&redirect_uri=%s' % (CLIENT_ID,'https://ec2-54-208-27-46.compute-1.amazonaws.com:8080/fs_get_token'))
 
 
-'''@home_blueprint.route('/fs_get_token')
-def foursquare_get_token():
+@home_blueprint.route('/fs_get_token')
+def fs_get_token():
     code = request.args.get('code')
-    req = requests.get('https://foursquare.com/oauth2/access_token?client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s&code=%s' % (CLIENT_ID, CLIENT_SECRET, 'my accept endpoint', code))
+    req = requests.get('https://foursquare.com/oauth2/access_token?client_id=%s&client_secret=%s&grant_type=authorization_code&redirect_uri=%s&code=%s' % (CLIENT_ID, CLIENT_SECRET, 'https://ec2-54-208-27-46.compute-1.amazonaws.com:8080/fs_get_token', code))
     token = req.json()['access_token']
     user_request = requests.get('https://api.foursquare.com/v2/users/self?oauth_token=%s&v=20150207' % (token))
     response_dict = user_request.json()['response']
     user_dict = response_dict['user']
     user_id = user_dict['id']
-    g.db.execute('update users set token=?, foursquare_id=? where name=?', [token, user_id, session.get('current_user')])
-    g.db.commit()
-    flash('successfully connected with foursquare')
-    return redirect('/')'''
+    user = db.session.query(User).filter_by(id=current_user.id).first()
+    user.token = token
+    user.foursquare_id = user_id
+    db.session.commit()
+    users = db.session.query(User).all()
+    users_printable = dir(users)
+    logFile = open('mylog.txt', 'w')
+    pprint(users, logFile)
+    #print_users()
+    #g.db.execute('update users set token=?, foursquare_id=? where name=?', [token, user_id, session.get('current_user')])
+    #g.db.commit()
+    #flash('successfully connected with foursquare')
+    flash('you attempted to login to foursquare')
+    return redirect('/')
     
 '''@home_blueprint.route('/fs_checkin', methods=['POST'])
 def fs_checkin():
@@ -85,7 +100,8 @@ def home():
         db.session.commit()
 
         flash('New entry was successfully posted. Thanks.')
-        flash(current_user.id)
+        flash(url_for('home.home'))
+
         return redirect(url_for('home.home'))
     else:
         posts = db.session.query(BlogPost).all()
@@ -96,3 +112,8 @@ def home():
 @home_blueprint.route('/welcome')   # pragma: no cover
 def welcome():
     return render_template('welcome.html')  # render a template
+
+def print_users():
+    users = db.session.query(User).all()
+    for user in users:
+        flash(user.foursquare_id)
